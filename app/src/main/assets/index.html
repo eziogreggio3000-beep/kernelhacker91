@@ -634,6 +634,13 @@ body.e1 #code,body.m1 #code,body.u1 #code{font-family:'Courier New',monospace;fo
 .refbar .rbm span{position:absolute;bottom:100%;left:50%;transform:translateX(-50%);white-space:nowrap;font-size:10px;color:#d22;font-weight:bold;line-height:1}
 .refbar .rbn{margin-top:6px}
 .refbar .rbm.rt span{left:auto;right:0;transform:none}
+/* acquisto multiplo e a raffica */
+.buyn{display:flex;gap:4px;align-items:center;margin:0 0 6px;flex-wrap:wrap}.buyn span{margin-right:2px}.buyn .btn{flex:1;min-width:44px;padding:6px 0}
+[data-crew]{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;touch-action:manipulation}
+body.holding [data-crew].buy{animation:shk .08s infinite alternate}
+@keyframes shk{from{transform:translateX(-1px)}to{transform:translateX(1px)}}
+.floatx{position:fixed;z-index:9500;pointer-events:none;font:bold 14px sans-serif;color:#ffd84a;text-shadow:0 1px 0 #000,0 0 4px #000;white-space:nowrap;animation:flx .9s ease-out forwards}
+@keyframes flx{from{opacity:1;transform:translateY(0)}to{opacity:0;transform:translateY(-60px)}}
 </style>
 </head>
 <body>
@@ -1016,7 +1023,28 @@ function buyMod(id){
 const e_sig=()=>era()+':'+S.legacy.length;
 const MILES=[6,14,25,40,60,85,115,150,200,260,330,420,520];
 function checkMile(){const sp=sysPoints(),t=MILES.find(x=>x<=sp&&!S.cardsAt.includes(x));if(t!==undefined){S.cardsAt.push(t);setTimeout(()=>showCards('mile'),500)}}
-function buyCrew(i){const c=crewCost(i);if(S.bytes<c){beep(110,.05);return}S.bytes-=c;S.crew[i]++;tune([440,660]);if(S.crew[i]===1)log(`${crewN(i)} si unisce al progetto.`);refresh(true)}
+const BUYN=[1,10,25,1e4],BUYL=['×1','×10','×25','MAX'];
+/* quanti ne puoi prendere col moltiplicatore attuale e quanto costano in tutto */
+function crewBatch(i){const want=BUYN[S.buyN||0];let n=0,tot=0,k=S.crew[i];const c0=crewCost(i);
+  while(n<want){const c=Math.ceil(c0*BAL.cg**(k-S.crew[i]));if(tot+c>S.bytes)break;tot+=c;n++;k++}
+  return {n,tot,next:n?0:c0}}
+function buyCrew(i,x,y,quiet){const b=crewBatch(i);if(!b.n){if(!quiet)beep(110,.05);return 0}
+  const was=S.crew[i];S.bytes-=b.tot;S.crew[i]+=b.n;
+  if(quiet)beep(500+Math.min(900,S.crew[i]*6),.025);else tune([440,660]);
+  if(was===0)log(`${crewN(i)} si unisce al progetto.`);
+  if(x!=null)floatTxt(x,y,quiet?`+${b.n}👤`:`+${b.n} 👤  −${fmtB(b.tot)}`,quiet);
+  refresh(true);updHeader();return b.n}
+function floatTxt(x,y,t,spread){const d=document.createElement('div');d.className='floatx';d.textContent=t;const r=spread?110:20;d.style.left=Math.max(4,Math.min(innerWidth-90,x+(Math.random()*2-1)*r))+'px';d.style.top=(y-20+(spread?Math.random()*30-15:0))+'px';document.body.appendChild(d);setTimeout(()=>d.remove(),900)}
+/* tieni premuto = acquisto a raffica, sempre più veloce (un tocco breve resta un acquisto singolo) */
+let holdT=null,holdN=0,holdOn=false,holdSup=false,hx=0,hy=0;
+function holdStop(){clearTimeout(holdT);holdT=null;if(holdOn){if(holdN>1)log(`Assunzioni a raffica: ${holdN} colpi.`);document.body.classList.remove('holding');holdSup=true;setTimeout(()=>holdSup=false,400)}holdOn=false;holdN=0}
+document.addEventListener('pointerdown',e=>{const b=e.target.closest&&e.target.closest('[data-crew]');if(!b||paused)return;
+  const i=+b.dataset.crew;hx=e.clientX;hy=e.clientY;holdStop();
+  holdT=setTimeout(()=>{holdOn=true;document.body.classList.add('holding');let wait=260;
+    const go=()=>{if(paused||!holdOn){holdStop();return}if(!buyCrew(i,hx,hy,true)){holdStop();return}holdN++;wait=Math.max(35,wait*.82);holdT=setTimeout(go,wait)};go()},320)});
+document.addEventListener('pointermove',e=>{if(holdT&&!holdOn&&Math.hypot(e.clientX-hx,e.clientY-hy)>10)holdStop()});
+['pointerup','pointercancel'].forEach(ev=>document.addEventListener(ev,holdStop));window.addEventListener('blur',holdStop);
+document.addEventListener('contextmenu',e=>{if(e.target.closest&&e.target.closest('[data-crew]'))e.preventDefault()});
 function buyCpu(){const n=CPUS[S.cpu+1];if(!n||S.bytes<hc(n.c)){beep(110,.05);return}S.bytes-=hc(n.c);S.cpu++;tune([400,600,800,1200],70);log(`Nuova CPU: ${cpuName(S.cpu)}. Tutto va x${BAL.cpu[S.cpu]}.`);refresh(true)}
 function buyRam(){const n=RAMS[S.ram+1];if(!n||S.bytes<hc(n.c)){beep(110,.05);return}S.bytes-=hc(n.c);S.ram++;tune([500,700,900],70);log(`RAM espansa a ${kb(n.k)}.`);refresh(true)}
 function setTheme(t){S.theme=t;applyEra();refresh(true)}
@@ -1078,10 +1106,10 @@ function renderHw2(){
 function renderTeam(){
   if(!has('kern'))return '<h3>TEAM</h3><div class="dim">Nessuno vuole lavorare a un progetto senza kernel.\nInstalla Bootloader e Kernel nella scheda MODULI.</div>';
   const cm=crewMult()*globalM();
-  return '<h3>COLLABORATORI</h3>'+CREW.map((k,i)=>{const c=crewCost(i);return `<button class="item ${S.bytes>=c?'buy':'poor'}" data-crew="${i}"><div class="t"><span>${crewN(i)} ×${S.crew[i]}</span><span>${fmtB(c)}</span></div><div class="d">${crewD(i)}</div><div class="d">+${fmtB(k.p*cm)} B/s ciascuno</div></button>`}).join('');
+  const bn=S.buyN||0;return '<h3>COLLABORATORI</h3>'+`<div class="buyn"><span>Acquista:</span>${BUYL.map((l,j)=>`<button class="btn ${bn===j?'sel':''}" data-buyn="${j}">${l}</button>`).join('')}</div><div class="dim" style="margin:-2px 0 6px;font-size:12px">👆 Tieni premuto per assumere a raffica.</div>`+CREW.map((k,i)=>{const b=crewBatch(i),c=b.n?b.tot:b.next;return `<button class="item ${b.n?'buy':'poor'}" data-crew="${i}"><div class="t"><span>${crewN(i)} ×${S.crew[i]}</span><span>${b.n>1?'+'+b.n+' · ':''}${fmtB(c)}</span></div><div class="d">${crewD(i)}</div><div class="d">+${fmtB(k.p*cm)}/s ciascuno</div></button>`}).join('');
 }
 function refresh(force){
-  const s={mods:(S.rival?S.rival.r:'')+MODS.map(modState).join()+(S.chal?S.chal.id+chalReqs(chalOf()).map(x=>x.ok).join():'')+rating(false).s+'|'+novelty()+'|'+e_sig(),hw:[deskKey(),(S.chalDone||[]).length+'/'+(S.chalFail||[]).length,S.rival?S.rival.r+':'+S.share:'',S.eraVer,S.major,S.money,JSON.stringify(S.lab),S.perks.join('|'),S.cpu,S.ram,S.bytes>=hc((CPUS[S.cpu+1]||{c:1/0}).c),S.bytes>=hc((RAMS[S.ram+1]||{c:1/0}).c),has('vga'),S.theme,S.snd,resetArm>Date.now()].join(),team:[era(),has('kern'),crewMult(),globalM(),...CREW.map((k,i)=>S.crew[i]+':'+(S.bytes>=crewCost(i)))].join()};
+  const s={mods:(S.rival?S.rival.r:'')+MODS.map(modState).join()+(S.chal?S.chal.id+chalReqs(chalOf()).map(x=>x.ok).join():'')+rating(false).s+'|'+novelty()+'|'+e_sig(),hw:[deskKey(),(S.chalDone||[]).length+'/'+(S.chalFail||[]).length,S.rival?S.rival.r+':'+S.share:'',S.eraVer,S.major,S.money,JSON.stringify(S.lab),S.perks.join('|'),S.cpu,S.ram,S.bytes>=hc((CPUS[S.cpu+1]||{c:1/0}).c),S.bytes>=hc((RAMS[S.ram+1]||{c:1/0}).c),has('vga'),S.theme,S.snd,resetArm>Date.now()].join(),team:[era(),has('kern'),S.buyN||0,Math.floor(Math.log2(S.bytes+1)*4),crewMult(),globalM(),...CREW.map((k,i)=>S.crew[i]+':'+(S.bytes>=crewCost(i)))].join()};
   for(const k in s){
     if(force||sigs[k]!==s[k]){
       const el=$('#p-'+k),st=el.scrollTop;
@@ -1110,7 +1138,8 @@ $('#tabs').addEventListener('click',e=>{const b=e.target.closest('button');if(!b
 $('main').addEventListener('click',e=>{
   const t=e.target.closest('button');if(!t)return;const d=t.dataset;
   if(t.dataset.chal){showChal();return}
-  if(d.m)buyMod(d.m);else if(d.crew!==undefined)buyCrew(+d.crew);else if(d.cpu)buyCpu();else if(d.ram)buyRam();
+  if(d.m)buyMod(d.m);else if(d.crew!==undefined){if(!holdSup){const r=t.getBoundingClientRect();buyCrew(+d.crew,e.clientX||r.left+r.width/2,e.clientY||r.top+10)}}else if(d.cpu)buyCpu();else if(d.ram)buyRam();
+  else if(d.buyn!==undefined){S.buyN=+d.buyn;refresh(true)}
   else if(d.theme!==undefined)setTheme(d.theme);
   else if(d.lab)buyLab(d.lab);
   else if(d.snd){S.snd=!S.snd;refresh(true);updHeader()}
