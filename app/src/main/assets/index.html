@@ -641,6 +641,29 @@ body.holding [data-crew].buy{animation:shk .08s infinite alternate}
 @keyframes shk{from{transform:translateX(-1px)}to{transform:translateX(1px)}}
 .floatx{position:fixed;z-index:9500;pointer-events:none;font:bold 14px sans-serif;color:#ffd84a;text-shadow:0 1px 0 #000,0 0 4px #000;white-space:nowrap;animation:flx .9s ease-out forwards}
 @keyframes flx{from{opacity:1;transform:translateY(0)}to{opacity:0;transform:translateY(-60px)}}
+/* nuovi minigiochi */
+.cab{display:flex;justify-content:space-between;align-items:center;margin:8px 0}.cab>div{display:flex;flex-direction:column;gap:10px}
+.cab button{width:64px;height:44px;border:2px solid #000;background:#ddd;position:relative;padding:0}
+.cab [data-cl] i{position:absolute;inset:8px 10px;background:var(--c);border:2px solid #000;border-radius:6px 0 0 6px}
+.cab [data-cr] b{position:absolute;inset:8px 16px;background:#222;border:4px solid var(--c);border-radius:4px}
+.cab button.on{outline:3px solid #fff;box-shadow:0 0 10px var(--c)}.cab button.ok{background:var(--c)}.cab button.no{background:#f66}
+.cabmid{font-size:28px;opacity:.6}
+.sortg{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:8px 0}.sortg button{display:flex;align-items:center;gap:6px;padding:6px;min-height:54px;font:inherit}
+.sortg .ic,.sortg .asc{width:34px;height:34px;flex:0 0 34px}.sortg button.ok{opacity:.55;outline:2px solid #2a2}.sortg button.no{background:#f66}
+.lw{display:flex;justify-content:center;gap:6px;font-size:28px;font-weight:bold;margin:6px 0 10px;letter-spacing:2px}.lw span{min-width:26px;text-align:center;border-bottom:3px solid currentColor}
+.lkeys{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}.lkeys button{font:bold 22px monospace;padding:10px 0}.lkeys button.ok{opacity:.35}.lkeys button.no{background:#f66}
+.holdw{text-align:center;margin:8px 0;font-weight:bold}.holdw.warn{color:#e22;animation:pulse2 .25s infinite}
+#holdb{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;padding:18px 0}#holdb.pr{filter:brightness(.8);transform:translateY(2px)}
+.spaml{display:flex;flex-direction:column;gap:6px;margin:8px 0}.spaml button{text-align:left;padding:9px 8px;font:inherit}.spaml button.ok{opacity:.45;text-decoration:line-through}.spaml button.no{background:#f66}
+/* crisi */
+#crisis{position:fixed;left:6px;right:6px;bottom:64px;z-index:800;background:#b00;color:#fff;border:2px solid #fff;box-shadow:0 0 0 2px #000,0 4px 18px rgba(0,0,0,.6);padding:7px 9px 9px;font:bold 14px sans-serif;cursor:pointer;animation:cri 1s infinite;-webkit-user-select:none;user-select:none}
+@keyframes cri{50%{background:#e01818}}
+#crisis .ct{display:flex;justify-content:space-between;gap:8px}#crisis .cs{font-family:monospace;font-size:16px}
+#crisis .ca{display:block;margin-top:4px;font-size:12.5px;opacity:.95}
+#crisis .cbt{display:flex;gap:6px;margin-top:6px}#crisis .cbt button{flex:1;background:#fff;color:#900;border:2px solid #000;font:bold 13px sans-serif;padding:7px 4px}
+#crisis .cbar{height:5px;background:rgba(0,0,0,.35);margin-top:6px}#crisis .cbar i{display:block;height:100%;background:#fff}
+.thief{position:fixed;z-index:850;font-size:40px;width:58px;height:58px;border-radius:50%;border:3px solid #ff0;background:rgba(0,0,0,.65);box-shadow:0 0 14px #ff0;transition:left .18s,top .18s;padding:0;line-height:1}
+#autotap{bottom:210px}
 </style>
 </head>
 <body>
@@ -655,6 +678,7 @@ body.holding [data-crew].buy{animation:shk .08s infinite alternate}
       <span>BUG <b id="sbug">0/5</b></span>
     </div>
   </header>
+  <div id="crisis" hidden></div>
   <main>
     <section id="p-code" class="pane on">
       <div id="codewrap"><pre id="code"></pre><div id="hint">▶ TOCCA QUI (o premi tasti)<br>PER SCRIVERE CODICE ◀</div></div>
@@ -924,11 +948,11 @@ const FONTS1=[['Verdana','Verdana,Tahoma,sans-serif',400],['Sistema 3.1 (grasset
 function applyEra(){const e=era(),f=fam(),F=FONTS1[S.font1||0]||FONTS1[0];document.body.style.setProperty('--f1',F[1]);document.body.style.setProperty('--w1',F[2]);document.body.className=(S.bigText?'bigtxt ':'')+(e?`gui ${f==='w'?'e'+e:f==='m'?'mac m'+e:'unix u'+e}`:(S.theme||({w:'dos',m:'amber',u:''}[S.styles[0]]||'')))}
 const ramUsed=()=>MODS.reduce((a,m)=>a+(has(m.id)?mram(m):0),0);
 function globalM(){let m=BAL.cpu[S.cpu];if(has('vga'))m*=1.25;if(has('hdd'))m*=1.2;if(has('snd'))m*=1.25;if(has('gui'))m*=BAL.gm;if(has('pkg'))m*=BAL.gm;MODS.forEach(x=>{if(x.x&&sysLv(x.id))m*=x.x});return m*(1+.25*(S.ngp||0))*(1+.2*L('prod'))*(P('qa')?.9:1)*(P('overclock')?2:1)*BAL.eraB**era()*(1+BAL.lv*extraLv())}
-const bugM=()=>Math.max(.3,1-.12*S.bugs.length);
+const bugM=()=>Math.max(.3,1-.12*S.bugs.length)*criM();
 function tapPow(){return tapBase()+baseBps()*BAL.tapShare*(P('spaghetti')?3:1)*(P('genio')?5:1)}
 function tapBase(){let t=1+(has('boot')?1:0)+(has('kbd')?2:0);if(has('mem'))t*=2;if(has('shell'))t*=2;return t*U()*globalM()*bugM()*(1+.25*L('tap'))*(P('spaghetti')?3:1)*(P('genio')?5:1)}
 const crewMult=()=>(has('sched')?BAL.cm[0]:1)*(has('mt')?BAL.cm[1]:1)*(has('net')?BAL.cm[2]:1);
-function baseBps(){const c=CREW.reduce((a,k,i)=>a+k.p*S.crew[i],0)*crewMult()*(P('genio')?.5:1);return (c+(has('kern')?3:0)+(has('fs')?20:0))*U()*globalM()*bugM()}
+function baseBps(){const c=CREW.reduce((a,k,i)=>a+k.p*S.crew[i],0)*crewMult()*(P('genio')?.5:1)*criCrew();return (c+(has('kern')?3:0)+(has('fs')?20:0))*U()*globalM()*bugM()}
 function bps(){return baseBps()*(sprintOn()?5:1)}
 const crewCost=i=>Math.ceil(CREW[i].c*U()*BAL.cg**S.crew[i]*(P('oss')?.5:1)*(P('stud')&&i<2?.5:1));
 const ver=()=>(S.major-1)+'.'+novelty();
@@ -1199,6 +1223,7 @@ function tick(){
       if(S.msg&&now>S.msg.until){S.msg=null;log('✉ Messaggio da Usenet scaduto senza risposta.','dim')}}
     updMsg();updNews();updEv();if(!ssOn&&$('#boot').hidden&&Date.now()-lastAct>60000)startSS();tutAcc+=dt;if(tutAcc>.2){tutAcc=0;updTut()}
     if(sprintEnd&&!sprintOn())endSprint();
+    criTick(dt);
     renderTix();
     saveAcc+=dt;if(saveAcc>5){saveAcc=0;save()}
     updHeader();refresh();
@@ -1323,7 +1348,7 @@ function testStart(E){
     S.legacy=[];S.styles[k]=f;S.releases=(S.releases||0)+3;S.major+=2;S.lastR=3;if(k===5)S.ended=1;
     newVersion(null,true);
   }
-  maybeEvent=me;S.legacy=[];S.tut=TUT.length;S.chal=null;spawnChal(true);S.bytes=Math.round(60*U());S.money=(S.money||0)+15*E;
+  maybeEvent=me;S.legacy=[];S.tut=TUT.length;S.tickets=[];S.chal=null;spawnChal(true);S.bytes=Math.round(60*U());S.money=(S.money||0)+15*E;
   while(RAMS[S.ram+1]&&RAMS[S.ram].k<ramUsed())S.ram++;
   ['#cards','#end','#ev'].forEach(x=>{const o=$(x);if(o)o.hidden=true});paused=false;
   applyEra();refresh(true);updHeader();save();
@@ -1619,19 +1644,20 @@ function icon(n,v=0){const e=era();if(e===0)return `<span class="asc ${n==='viru
   return `<span class="ic ie${e}">${sv}</span>`}
 
 const PADC=['#e33','#2b2','#36f','#ec2'];
-function openBugGame(id){
-  const bug=S.bugs.find(b=>b.id==id);if(!bug||paused)return;
+const MGK=()=>['squash','odd','simon','mole','timing','memory','cables','sort','letters'].concat(era()>=2?['hold','spam']:[]);
+function openBugGame(id,opt){
+  const bug=opt?{t:opt.t}:S.bugs.find(b=>b.id==id);if(!bug||paused)return;
   paused=true;const o=$('#mg');o.hidden=false;
-  const kind=window.__fk||pick(['squash','odd','simon','mole','timing','memory']),T={simon:5000,mole:7500,memory:12000}[kind]||6000;let t0=Date.now(),done=false,timer,mv,live=kind!=='simon';
-  const titles={squash:'Chiudi tutti e 3 i popup di errore!',odd:'Tocca l\'icona diversa dalle altre',simon:'Guarda la sequenza di colori, poi ripetila',mole:'Elimina 4 virus prima che scappino!',timing:'Premi STOP quando la barra è nella zona verde',memory:'Trova le 3 coppie di icone uguali'};
-  o.innerHTML=`<div class="dlg" style="width:440px"><div class="tb">Debug · ${esc(bug.t)}</div><div class="bd"><div style="text-align:center"><b>${titles[kind]}</b></div><div class="mgbar"><i></i></div><div id="mgbody"></div><div class="mgres"></div></div></div>`;
+  const kind=(opt&&opt.kind)||window.__fk||pick(MGK()),T={simon:5000,mole:7500,memory:12000,cables:8000,sort:7000,letters:8000,hold:10000,spam:8000}[kind]||6000;let t0=Date.now(),done=false,timer,mv,live=kind!=='simon';
+  const titles={cables:'Collega ogni cavo alla presa dello stesso colore',sort:'Tocca i file dal più piccolo al più grande',letters:'Scrivi la parola toccando le lettere in ordine',hold:era()>=4?'Tieni premuto per scaricare: molla quando lampeggia!':'Tieni premuto per collegarti: molla se alzano la cornetta!',spam:'Cancella le 3 e-mail spazzatura, lascia le altre',squash:'Chiudi tutti e 3 i popup di errore!',odd:'Tocca l\'icona diversa dalle altre',simon:'Guarda la sequenza di colori, poi ripetila',mole:'Elimina 4 virus prima che scappino!',timing:'Premi STOP quando la barra è nella zona verde',memory:'Trova le 3 coppie di icone uguali'};
+  o.innerHTML=`<div class="dlg" style="width:440px"><div class="tb">${opt?'🚨 '+esc(bug.t):'Debug · '+esc(bug.t)}</div><div class="bd"><div style="text-align:center"><b>${titles[kind]}</b></div><div class="mgbar"><i></i></div><div id="mgbody"></div><div class="mgres"></div></div></div>`;
   const body=$('#mgbody'),res=o.querySelector('.mgres'),bar=o.querySelector('.mgbar i');
   const finish=(ok,msg)=>{
     if(done)return;done=true;clearInterval(timer);clearInterval(mv);
     const left=Math.max(0,1-(Date.now()-t0)/T);
     res.innerHTML=(ok?'✔ ':'✘ ')+esc(msg);res.className='mgres '+(ok?'':'err');
     if(ok)tune([660,880,1320],60);else beep(120,.2,'sawtooth',.05);
-    setTimeout(()=>{o.hidden=true;paused=false;lastT=performance.now();if(ok)fixBug(id,false,1+left);else log('✘ '+msg,'err')},ok?700:1400);
+    setTimeout(()=>{o.hidden=true;paused=false;lastT=performance.now();if(opt)opt.end(ok);else if(ok)fixBug(id,false,1+left);else log('✘ '+msg,'err')},ok?700:1400);
   };
   if(kind==='squash'){
     let left=3;body.innerHTML=`<div class="mgarea">${[0,1,2].map(i=>`<button class="mgbug" data-k="${i}">${icon('err')}</button>`).join('')}</div>`;
@@ -1659,6 +1685,45 @@ function openBugGame(id){
     pop();mv=setInterval(pop,650);
     cells.forEach((c,i)=>c.addEventListener('pointerdown',e=>{e.preventDefault();if(done||!up.has(i))return;up.delete(i);c.classList.remove('up');c.innerHTML='<span class="zap">✶</span>';hits++;beep(600+hits*120,.05);
       $('#molec').textContent=`Virus eliminati: ${hits}/4`;if(hits>=4)finish(true,'Virus eliminati!');setTimeout(()=>{if(!up.has(i))c.innerHTML=''},250)}));
+  }else if(kind==='cables'){
+    const C=shuf(['#e33','#2b2','#36f','#ec2']).slice(0,3),R2=shuf([...C]);let sel=null,ok=0;
+    body.innerHTML=`<div class="cab"><div>${C.map((c,i)=>`<button data-cl="${i}" style="--c:${c}"><i></i></button>`).join('')}</div><div class="cabmid">⟿</div><div>${R2.map((c,i)=>`<button data-cr="${i}" style="--c:${c}"><b></b></button>`).join('')}</div></div>`;
+    body.onclick=e=>{if(done)return;const l=e.target.closest('[data-cl]'),r=e.target.closest('[data-cr]');
+      if(l&&!l.classList.contains('ok')){body.querySelectorAll('[data-cl]').forEach(x=>x.classList.remove('on'));l.classList.add('on');sel=+l.dataset.cl;beep(600,.03);return}
+      if(r&&sel!==null&&!r.classList.contains('ok')){if(R2[+r.dataset.cr]===C[sel]){r.classList.add('ok');body.querySelector(`[data-cl="${sel}"]`).classList.add('ok');body.querySelector(`[data-cl="${sel}"]`).classList.remove('on');sel=null;ok++;beep(800+ok*150,.05);if(ok===3)finish(true,'Tutti i cavi collegati!')}
+        else{r.classList.add('no');finish(false,'Presa sbagliata: scintille!')}}};
+  }else if(kind==='sort'){
+    const u=U(),sz=shuf([1,2,3,4,5,6,7,8,9,10,11,12]).slice(0,4).map(x=>Math.round((x*37+Math.random()*30)*u)),ord=[...sz].sort((a,b)=>a-b);let k=0;
+    body.innerHTML=`<div class="sortg">${sz.map((z,i)=>`<button data-sz="${i}">${icon('doc')}<span class="sz">${fmtB(z)}</span></button>`).join('')}</div>`;
+    body.onclick=e=>{const b=e.target.closest('[data-sz]');if(!b||done||b.classList.contains('ok'))return;
+      if(sz[+b.dataset.sz]===ord[k]){k++;b.classList.add('ok');b.querySelector('.sz').textContent=k+'°';beep(500+k*150,.04);if(k===4)finish(true,'File in ordine!')}
+      else{b.classList.add('no');finish(false,'Non era il più piccolo rimasto!')}};
+  }else if(kind==='letters'){
+    const W=pick(era()<=1?['BOOT','SAVE','COPY','DISCO','MENU']:era()<=3?['RETE','FILE','MAIL','PLAY','STAMPA']:['WIFI','CLOUD','APP','SYNC','FOTO']);
+    const ex=shuf('ABCDEFGHILMNOPRSTUVZ'.split('').filter(c=>!W.includes(c))).slice(0,9-W.length),keys=shuf([...W.split('').map((c,i)=>({c,i})),...ex.map(c=>({c,i:-1}))]);let k=0;
+    body.innerHTML=`<div class="lw">${W.split('').map((c,i)=>`<span data-lw="${i}">_</span>`).join('')}</div><div class="lkeys">${keys.map((x,j)=>`<button data-lk="${j}">${x.c}</button>`).join('')}</div>`;
+    body.onclick=e=>{const b=e.target.closest('[data-lk]');if(!b||done||b.disabled)return;const x=keys[+b.dataset.lk];
+      if(x.c===W[k]){body.querySelector(`[data-lw="${k}"]`).textContent=x.c;b.disabled=true;b.classList.add('ok');k++;beep(600+k*100,.03);if(k===W.length)finish(true,`Scritto: ${W}!`)}
+      else{b.classList.add('no');finish(false,`Lettera sbagliata: serviva ${W[k]}`)}};
+  }else if(kind==='hold'){
+    let p=0,down=false,warn=0,next=Date.now()+900+Math.random()*900;const dl=era()>=4;
+    body.innerHTML=`<div class="tbar"><div class="tz" style="left:0;width:0%"></div></div><div class="holdw" id="holdw">${dl?'⬇ scaricamento…':'☎ collegamento…'}</div><button class="btn sel tstop" id="holdb">[ TIENI PREMUTO ]</button>`;
+    const z=body.querySelector('.tz'),hb=$('#holdb'),hw=$('#holdw');
+    hb.addEventListener('pointerdown',e=>{e.preventDefault();down=true;hb.classList.add('pr')});
+    const up=()=>{down=false;hb.classList.remove('pr')};['pointerup','pointercancel','pointerleave'].forEach(ev=>hb.addEventListener(ev,up));
+    mv=setInterval(()=>{if(done)return;const n=Date.now();
+      if(!warn&&n>next){warn=n+1100;hw.textContent=dl?'⚠ CONNESSIONE INSTABILE: MOLLA!':'⚠ ALZANO LA CORNETTA: MOLLA!';hw.classList.add('warn');beep(220,.15,'square',.05)}
+      if(warn&&n>warn-850&&down){finish(false,dl?'Download corrotto: dovevi mollare!':'Linea caduta: dovevi mollare!');return}
+      if(warn&&n>warn){warn=0;next=n+900+Math.random()*1200;hw.textContent=dl?'⬇ scaricamento…':'☎ collegamento…';hw.classList.remove('warn')}
+      if(down&&!warn){p+=1.6;z.style.width=Math.min(100,p)+'%';if(p%8<1.6)beep(900+p*6,.015);if(p>=100)finish(true,dl?'Download completato!':'Connesso a 28.800 baud!')}},40);
+  }else if(kind==='spam'){
+    const SP=shuf(['HAI VINTO UN MILIONE!!!','Sei il visitatore numero 1.000.000','Inoltra a 10 amici o sfortuna!','Un principe lontano ti scrive','Scarica RAM gratis qui','Soldi facili da casa!!!']).slice(0,3),
+      OK=shuf(['Riunione di lunedì','Foto delle vacanze','Bozza del manuale','Pizza stasera?','Report delle vendite','Auguri di compleanno']).slice(0,3),
+      M=shuf([...SP.map(t=>({t,s:1})),...OK.map(t=>({t,s:0}))]);let k=0;
+    body.innerHTML=`<div class="spaml">${M.map((m,i)=>`<button data-sp="${i}">✉ ${esc(m.t)}</button>`).join('')}</div>`;
+    body.onclick=e=>{const b=e.target.closest('[data-sp]');if(!b||done||b.classList.contains('ok'))return;
+      if(M[+b.dataset.sp].s){b.classList.add('ok');b.innerHTML='🗑 cancellata';k++;beep(700+k*120,.04);if(k===3)finish(true,'Posta pulita!')}
+      else{b.classList.add('no');finish(false,'Era una mail vera: l\'hai cancellata!')}};
   }else if(kind==='memory'){
     const sel=shuf([...ODDI]).slice(0,3),cards=shuf([...sel,...sel]);let open=[],matched=0,lock=false;
     body.innerHTML=`<div class="memg">${cards.map((c,i)=>`<button data-mm="${i}"><span class="back">?</span></button>`).join('')}</div>`;
@@ -1675,6 +1740,64 @@ function openBugGame(id){
   }
   timer=setInterval(()=>{if(!live)return;const f=1-(Date.now()-t0)/T;bar.style.width=Math.max(0,f*100)+'%';if(f<=0)finish(false,'Tempo scaduto! Il bug è ancora lì.')},50);
 }
+
+
+/* ---------- crisi improvvise ---------- */
+let cri=null,criNext=0,criThief=null;
+const criM=()=>cri&&!cri.ok?(cri.id==='virus'?.5:cri.id==='blackout'?.05:1):1;
+const criCrew=()=>cri&&!cri.ok&&cri.id==='coffee'?.5:1;
+const CRISES=[
+ {id:'virus',e:1,t:'🦠 VIRUS NEL SISTEMA! Produzione dimezzata',a:'TOCCA PER DISINFETTARE',T:45},
+ {id:'blackout',e:0,t:'⚡ BLACKOUT! Tutto è quasi fermo',a:'TOCCA 15 VOLTE PER RIAVVIARE IL GENERATORE',T:15},
+ {id:'quit',e:0,t:'',a:'',T:15,ok:()=>S.crew.some(x=>x>0)},
+ {id:'thief',e:3,t:'🕵️ UN HACKER TI STA RUBANDO IL CODICE!',a:'PRENDILO: TOCCALO 3 VOLTE',T:20},
+ {id:'coffee',e:0,t:'☕ È FINITO IL CAFFÈ! Team al 50%',a:'',T:40,ok:()=>S.crew.some(x=>x>0)},
+ {id:'leak',e:2,t:'📰 IL TUO CODICE È FINITO SU UN GIORNALE!',a:'TOCCA PER LIMITARE I DANNI',T:30}];
+function criSpawn(){
+  const L2=CRISES.filter(c=>era()>=c.e&&(!c.ok||c.ok())&&c.id!==S.lastCri);if(!L2.length)return;
+  const c=pick(L2),now=Date.now();cri={id:c.id,t:c.t,a:c.a,left:c.T*1000,T:c.T*1000,n:0,stolen:0};S.lastCri=c.id;
+  if(c.id==='quit'){const own=CREW.map((_,i)=>i).filter(i=>S.crew[i]>0),i=own[own.length-1];cri.ci=i;cri.cost=Math.ceil(crewCost(i)*1.5);cri.t=`🧳 ${crewN(i)} VUOLE ANDARSENE CON IL CODICE!`}
+  if(c.id==='coffee')cri.cost=Math.ceil(Math.max(bps()*8,crewCost(0)));
+  if(c.id==='thief')criThiefShow();
+  tune([880,440,880,440,880],90);log(cri.t,'err');criRender();
+}
+function criEnd(ok,msg){if(!cri)return;cri.ok=true;if(criThief){criThief.remove();criThief=null}
+  if(ok){S.criFixed=(S.criFixed||0)+1;if(S.criFixed>=5)trophy('crisi');tune([660,880,1100],70)}else beep(150,.25,'sawtooth',.05);
+  log((ok?'✔ ':'✘ ')+msg,ok?'warn':'err');cri=null;criNext=Date.now()+150000+Math.random()*150000;criRender();refresh(true);updHeader();save()}
+function criRender(){const b=$('#crisis');if(!cri){b.hidden=true;return}b.hidden=false;
+  const left=Math.max(0,cri.left),f=left/cri.T;let act='';
+  if(cri.id==='quit')act=`<span class="cbt"><button data-ca="pay">Aumento −${fmtB(cri.cost)}</button><button data-ca="let">Lascialo andare</button></span>`;
+  else if(cri.id==='coffee')act=`<span class="cbt"><button data-ca="pay">Compra il caffè −${fmtB(cri.cost)}</button></span>`;
+  else if(cri.id==='blackout')act=`<span class="ca">${cri.a} (${cri.n}/15)</span>`;
+  else if(cri.id==='thief')act=`<span class="ca">${cri.a} (${cri.n}/3) · rubati ${fmtB(cri.stolen)}</span>`;
+  else act=`<span class="ca">${cri.a}</span>`;
+  b.innerHTML=`<div class="ct">${esc(cri.t)} <span class="cs">${Math.ceil(left/1000)}s</span></div>${act}<div class="cbar"><i style="width:${f*100}%"></i></div>`}
+function criTick(dt){const now=Date.now();
+  if(!cri){if(!criNext)criNext=now+180000;if(now>criNext&&has('kern')&&(S.playSec||0)>240&&!sprintOn()&&!S.msg&&Math.random()<dt/20)criSpawn();return}
+  if(cri.id==='thief'){const st=S.bytes*.03*dt;S.bytes-=st;cri.stolen+=st}
+  cri.left-=dt*1000;
+  if(cri.left<=0){const id=cri.id;
+    if(id==='virus'){const l=Math.floor(S.bytes*.15);S.bytes-=l;criEnd(false,`Il virus ha cancellato ${fmtB(l)} di codice prima di sparire.`)}
+    else if(id==='blackout'){const l=Math.floor(S.bytes*.1);S.bytes-=l;criEnd(false,`La corrente è tornata da sola, ma hai perso ${fmtB(l)} non salvati.`)}
+    else if(id==='quit')criLeave();
+    else if(id==='thief')criEnd(false,`L'hacker è scappato con ${fmtB(cri.stolen)} di codice.`);
+    else if(id==='coffee')criEnd(true,'Il caffè è arrivato da solo. Il team torna al lavoro.');
+    else if(id==='leak'){S.buzz-=.5;criEnd(false,'Lo scandalo è esploso: −0,5 stelle al prossimo lancio.')}
+    return}
+  criAcc+=dt;if(criAcc>.25){criAcc=0;criRender()}}
+let criAcc=0;
+function criLeave(){const i=cri.ci,l=Math.floor(S.bytes*.08);S.crew[i]=Math.max(0,S.crew[i]-1);S.bytes-=l;criEnd(false,`${crewN(i)} se n'è andato portandosi via ${fmtB(l)} di codice.`)}
+function criThiefShow(){criThief=document.createElement('button');criThief.className='thief';criThief.innerHTML='🕵️';document.body.appendChild(criThief);
+  const jump=()=>{criThief.style.left=(10+Math.random()*(innerWidth-70))+'px';criThief.style.top=(90+Math.random()*(innerHeight-260))+'px'};jump();
+  criThief.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();if(!cri||paused)return;cri.n++;beep(500+cri.n*200,.06);
+    if(cri.n>=3){const g=cri.stolen*1.5;gain(g);criEnd(true,`Hacker preso! Ti restituisce il codice con gli interessi: +${fmtB(g)}.`)}else{jump();criRender()}})}
+document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('#crisis');if(!b||!cri||paused)return;const a=e.target.closest('[data-ca]');
+  if(cri.id==='quit'&&a){if(a.dataset.ca==='pay'){if(S.bytes<cri.cost){beep(110,.05);log('Non hai abbastanza codice per l\'aumento.','err');return}S.bytes-=cri.cost;criEnd(true,`${crewN(cri.ci)} resta, felice dell'aumento.`)}else criLeave();return}
+  if(cri.id==='coffee'&&a){if(S.bytes<cri.cost){beep(110,.05);return}S.bytes-=cri.cost;criEnd(true,'Caffè per tutti! Il team torna a pieno ritmo.');return}
+  if(cri.id==='blackout'){cri.n++;beep(300+cri.n*40,.03);if(cri.n>=15)criEnd(true,'Generatore riavviato: si torna al lavoro!');else criRender();return}
+  if(cri.id==='virus'){openBugGame(0,{kind:'mole',t:'Antivirus',end:ok=>{if(ok)criEnd(true,'Virus eliminato! Produzione tornata normale.');else log('L\'antivirus ha mancato il bersaglio: riprova!','err')}});return}
+  if(cri.id==='leak'){openBugGame(0,{kind:era()>=2?'spam':'squash',t:'Ufficio stampa',end:ok=>{if(ok)criEnd(true,'Comunicato perfetto: nessun danno alla reputazione.');else log('Il comunicato non ha convinto nessuno: riprova!','err')}});return}
+});
 
 /* ---------- sfondi per epoca e famiglia ---------- */
 const WALL={
@@ -1813,7 +1936,7 @@ $('#menub').addEventListener('click',()=>setPause(!userPause));
 /* ---------- trofei ---------- */
 function legacyGet(){try{return JSON.parse(localStorage.getItem('kh91_legacy')||'{}')}catch(e){return {}}}
 function legacySet(l){try{localStorage.setItem('kh91_legacy',JSON.stringify(l))}catch(e){}}
-const TICON={first:'<svg viewBox="0 0 32 32" width="100%" height="100%" shape-rendering="crispEdges"><rect x="3.5" y="4.5" width="25" height="18" fill="#d8d0b8" stroke="#000"/><rect x="6" y="7" width="20" height="12" fill="#102030"/><rect x="9" y="9" width="2" height="8" fill="#3f3"/><rect x="13" y="9" width="2" height="8" fill="#3f3"/><rect x="11" y="12" width="2" height="2" fill="#3f3"/><rect x="17" y="9" width="6" height="2" fill="#3f3"/><rect x="19" y="11" width="2" height="4" fill="#3f3"/><rect x="17" y="15" width="6" height="2" fill="#3f3"/><rect x="12.5" y="22.5" width="7" height="3" fill="#b8b098" stroke="#000"/><rect x="6.5" y="25.5" width="19" height="3" fill="#d8d0b8" stroke="#000"/></svg>',five:'<svg viewBox="0 0 32 32" width="100%" height="100%" shape-rendering="crispEdges"><polygon points="16,2 20,12 30,12 22,18 25,29 16,23 7,29 10,18 2,12 12,12" fill="#ffcc00" stroke="#000"/><polygon points="16,7 18,13 14,13" fill="#fff6b0"/><polygon points="16,23 25,29 22,18" fill="#e0a800"/></svg>',zero:'<svg viewBox="0 0 32 32" width="100%" height="100%" shape-rendering="crispEdges"><rect x="6.5" y="3.5" width="19" height="25" fill="#f4f4f4" stroke="#000"/><rect x="10" y="6" width="12" height="20" fill="#222"/><rect x="13" y="9" width="6" height="14" fill="#f4f4f4"/><polygon points="19,10 19,13 13,22 13,19" fill="#222"/><rect x="8" y="27" width="16" height="1" fill="#999"/></svg>',combo:'<svg viewBox="0 0 32 32" width="100%" height="100%" shape-rendering="crispEdges"><polygon points="16,1 22,9 26,17 23,26 16,31 9,26 6,17 10,9 13,14" fill="#ff5a00" stroke="#000"/><polygon points="16,11 20,18 19,25 16,28 13,25 12,19 14,21" fill="#ffd200"/><polygon points="16,19 18,24 16,27 14,24" fill="#fff6c0"/></svg>',bugs50:'<svg viewBox="0 0 32 32" width="100%" height="100%" shape-rendering="crispEdges"><line x1="10" y1="5" x2="13" y2="8" stroke="#000" stroke-width="1.5"/><line x1="22" y1="5" x2="19" y2="8" stroke="#000" stroke-width="1.5"/><circle cx="16" cy="10" r="4" fill="#111"/><line x1="5" y1="14" x2="9" y2="16" stroke="#000" stroke-width="1.5"/><line x1="27" y1="14" x2="23" y2="16" stroke="#000" stroke-width="1.5"/><line x1="4" y1="21" x2="8" y2="21" stroke="#000" stroke-width="1.5"/><line x1="28" y1="21" x2="24" y2="21" stroke="#000" stroke-width="1.5"/><line x1="6" y1="28" x2="9" y2="25" stroke="#000" stroke-width="1.5"/><line x1="26" y1="28" x2="23" y2="25" stroke="#000" stroke-width="1.5"/><circle cx="16" cy="20" r="9" fill="#e02020" stroke="#000"/><rect x="15.5" y="11" width="1" height="18" fill="#000"/><circle cx="12" cy="17" r="1.8" fill="#000"/><circle cx="20" cy="17" r="1.8" fill="#000"/><circle cx="11.5" cy="23" r="1.8" fill="#000"/><circle cx="20.5" cy="23" r="1.8" fill="#000"/><circle cx="12" cy="14" r="1" fill="#fff"/></svg>',rock:'<svg viewBox="0 0 32 32" width="100%" height="100%" shape-rendering="crispEdges"><polygon points="4,27 6,16 12,8 21,7 28,14 29,27" fill="#8a8a8a" stroke="#000"/><polygon points="12,8 21,7 19,16 11,17" fill="#b4b4b4"/><polygon points="19,16 28,14 29,27 21,27" fill="#666"/><polygon points="6,16 11,17 10,27 4,27" fill="#9c9c9c"/><rect x="3" y="27" width="27" height="2" fill="#5a4a30"/></svg>',rival1:'<svg viewBox="0 0 32 32" width="100%" height="100%" shape-rendering="crispEdges"><polygon points="23,2 30,2 30,9 12,26 6,20" fill="#dfe3ee" stroke="#000"/><polygon points="25,4 28,4 13,20 11,18" fill="#fff"/><polygon points="5,16 9,12 20,23 16,27" fill="#d4a830" stroke="#000"/><polygon points="6,23 9,26 5,30 2,27" fill="#7a4a20" stroke="#000"/></svg>',rival5:'<svg viewBox="0 0 32 32" width="100%" height="100%" shape-rendering="crispEdges"><polygon points="3,24 3,9 10,16 16,5 22,16 29,9 29,24" fill="#ffcc00" stroke="#000"/><polygon points="16,9 19,15 13,15" fill="#fff4a0"/><rect x="3.5" y="23.5" width="25" height="5" fill="#e0a800" stroke="#000"/><circle cx="9" cy="26" r="1.6" fill="#d22"/><circle cx="16" cy="26" r="1.6" fill="#26d"/><circle cx="23" cy="26" r="1.6" fill="#2b2"/><circle cx="3" cy="9" r="1.6" fill="#ffcc00" stroke="#000"/><circle cx="16" cy="5" r="1.6" fill="#ffcc00" stroke="#000"/><circle cx="29" cy="9" r="1.6" fill="#ffcc00" stroke="#000"/></svg>',chal3:'<svg viewBox="0 0 32 32" width="100%" height="100%" shape-rendering="crispEdges"><circle cx="14" cy="18" r="12" fill="#e02020" stroke="#000"/><circle cx="14" cy="18" r="9" fill="#fff"/><circle cx="14" cy="18" r="6" fill="#e02020"/><circle cx="14" cy="18" r="3" fill="#fff"/><line x1="14" y1="18" x2="29" y2="3" stroke="#5a3a1a" stroke-width="2"/><polygon points="25,3 31,1 29,7" fill="#3a8ee6" stroke="#000"/></svg>',chalall:'<svg viewBox="0 0 32 32" width="100%" height="100%" shape-rendering="crispEdges"><rect x="11.5" y="5.5" width="9" height="5" fill="none" stroke="#000" stroke-width="2"/><rect x="3.5" y="10.5" width="25" height="5" fill="#a93226" stroke="#000"/><rect x="3.5" y="15.5" width="25" height="13" fill="#c0392b" stroke="#000"/><rect x="14" y="13" width="4" height="5" fill="#ccc" stroke="#000"/><rect x="6" y="21" width="20" height="1" fill="#8e2a20"/></svg>',fams:'<svg viewBox="0 0 32 32" width="100%" height="100%" shape-rendering="crispEdges"><rect x="1.5" y="2.5" width="18" height="13" fill="#c0c0c0" stroke="#000"/><rect x="2" y="3" width="17" height="3" fill="#000080"/><rect x="7.5" y="9.5" width="18" height="13" fill="#eee" stroke="#000"/><rect x="8" y="10" width="17" height="3" fill="#bbb"/><rect x="8" y="11" width="17" height="1" fill="#fff"/><rect x="13.5" y="16.5" width="17" height="13" fill="#c9c2b0" stroke="#000"/><rect x="14" y="17" width="16" height="3" fill="#7b68a6"/></svg>',tb:'<svg viewBox="0 0 32 32" width="100%" height="100%" shape-rendering="crispEdges"><rect x="2.5" y="7.5" width="27" height="18" fill="#b8b8b8" stroke="#000"/><circle cx="13" cy="16.5" r="7" fill="#e6e6e6" stroke="#000"/><circle cx="13" cy="16.5" r="4" fill="none" stroke="#c8c8c8"/><circle cx="13" cy="16.5" r="1.5" fill="#666"/><line x1="26" y1="10" x2="15" y2="15" stroke="#333" stroke-width="2"/><rect x="24" y="21" width="3" height="2" fill="#3c3"/></svg>',y2k:'<svg viewBox="0 0 32 32" width="100%" height="100%" shape-rendering="crispEdges"><rect x="4.5" y="6.5" width="23" height="22" fill="#fff" stroke="#000"/><rect x="4.5" y="6.5" width="23" height="6" fill="#d22" stroke="#000"/><rect x="9" y="3" width="2" height="6" fill="#333"/><rect x="21" y="3" width="2" height="6" fill="#333"/><rect x="8" y="15" width="7" height="11" fill="#000"/><rect x="10" y="17" width="3" height="7" fill="#fff"/><rect x="17" y="15" width="7" height="11" fill="#000"/><rect x="19" y="17" width="3" height="7" fill="#fff"/></svg>',bubble:'<svg viewBox="0 0 32 32" width="100%" height="100%" shape-rendering="crispEdges"><rect x="3" y="28" width="26" height="1" fill="#000"/><rect x="4.5" y="21.5" width="4" height="6" fill="#2b2" stroke="#000"/><rect x="10.5" y="16.5" width="4" height="11" fill="#2b2" stroke="#000"/><rect x="16.5" y="10.5" width="4" height="17" fill="#2b2" stroke="#000"/><circle cx="24" cy="9" r="6" fill="#ffb0e0" stroke="#000"/><circle cx="22" cy="7" r="1.5" fill="#fff"/></svg>',future:'<svg viewBox="0 0 32 32" width="100%" height="100%" shape-rendering="crispEdges"><polygon points="16,1 21,9 21,22 11,22 11,9" fill="#eee" stroke="#000"/><circle cx="16" cy="12" r="2.6" fill="#3a8ee6" stroke="#000"/><polygon points="11,15 5,24 11,22" fill="#d22" stroke="#000"/><polygon points="21,15 27,24 21,22" fill="#d22" stroke="#000"/><polygon points="12,23 20,23 16,31" fill="#ff8c00"/><polygon points="14,23 18,23 16,28" fill="#ffd200"/></svg>',end:'<svg viewBox="0 0 32 32" width="100%" height="100%" shape-rendering="crispEdges"><rect x="5" y="3" width="2" height="27" fill="#7a4a20"/><rect x="7" y="4" width="4" height="4" fill="#fff"/><rect x="11" y="4" width="4" height="4" fill="#000"/><rect x="15" y="4" width="4" height="4" fill="#fff"/><rect x="19" y="4" width="4" height="4" fill="#000"/><rect x="23" y="4" width="4" height="4" fill="#fff"/><rect x="7" y="8" width="4" height="4" fill="#000"/><rect x="11" y="8" width="4" height="4" fill="#fff"/><rect x="15" y="8" width="4" height="4" fill="#000"/><rect x="19" y="8" width="4" height="4" fill="#fff"/><rect x="23" y="8" width="4" height="4" fill="#000"/><rect x="7" y="12" width="4" height="4" fill="#fff"/><rect x="11" y="12" width="4" height="4" fill="#000"/><rect x="15" y="12" width="4" height="4" fill="#fff"/><rect x="19" y="12" width="4" height="4" fill="#000"/><rect x="23" y="12" width="4" height="4" fill="#fff"/><rect x="6.5" y="3.5" width="21" height="13" fill="none" stroke="#000"/></svg>',y2007:'<svg viewBox="0 0 32 32" width="100%" height="100%" shape-rendering="crispEdges"><rect x="9.5" y="2.5" width="14" height="27" rx="2" fill="#222" stroke="#000"/><rect x="11" y="6" width="11" height="18" fill="#3a8ae0"/><rect x="12" y="8" width="3" height="3" fill="#ffcc00"/><rect x="17" y="8" width="3" height="3" fill="#e33"/><rect x="12" y="13" width="3" height="3" fill="#3c3"/><rect x="17" y="13" width="3" height="3" fill="#fff"/><circle cx="16.5" cy="26.5" r="1.5" fill="#555"/><rect x="11" y="6" width="11" height="6" fill="rgba(255,255,255,.2)"/></svg>',hacker:'<svg viewBox="0 0 32 32" width="100%" height="100%" shape-rendering="crispEdges"><rect x="3.5" y="5.5" width="25" height="19" fill="#111" stroke="#888"/><rect x="7" y="10" width="2" height="2" fill="#3f3"/><rect x="9" y="12" width="2" height="2" fill="#3f3"/><rect x="7" y="14" width="2" height="2" fill="#3f3"/><rect x="13" y="15" width="7" height="2" fill="#3f3"/><rect x="12.5" y="24.5" width="7" height="3" fill="#888" stroke="#000"/><circle cx="24" cy="24" r="5" fill="#ffcc00" stroke="#000"/><rect x="23" y="21" width="2" height="4" fill="#000"/></svg>',lock:'<svg viewBox="0 0 32 32" width="100%" height="100%" shape-rendering="crispEdges"><path d="M10 14 V10 a6 6 0 0 1 12 0 V14" fill="none" stroke="#888" stroke-width="3"/><rect x="6.5" y="13.5" width="19" height="15" fill="#b9a24a" stroke="#000"/><rect x="15" y="18" width="2" height="6" fill="#4a3a10"/></svg>'};
+const TICON={first:'<svg viewBox="0 0 32 32" width="100%" height="100%" shape-rendering="crispEdges"><rect x="3.5" y="4.5" width="25" height="18" fill="#d8d0b8" stroke="#000"/><rect x="6" y="7" width="20" height="12" fill="#102030"/><rect x="9" y="9" width="2" height="8" fill="#3f3"/><rect x="13" y="9" width="2" height="8" fill="#3f3"/><rect x="11" y="12" width="2" height="2" fill="#3f3"/><rect x="17" y="9" width="6" height="2" fill="#3f3"/><rect x="19" y="11" width="2" height="4" fill="#3f3"/><rect x="17" y="15" width="6" height="2" fill="#3f3"/><rect x="12.5" y="22.5" width="7" height="3" fill="#b8b098" stroke="#000"/><rect x="6.5" y="25.5" width="19" height="3" fill="#d8d0b8" stroke="#000"/></svg>',five:'<svg viewBox="0 0 32 32" width="100%" height="100%" shape-rendering="crispEdges"><polygon points="16,2 20,12 30,12 22,18 25,29 16,23 7,29 10,18 2,12 12,12" fill="#ffcc00" stroke="#000"/><polygon points="16,7 18,13 14,13" fill="#fff6b0"/><polygon points="16,23 25,29 22,18" fill="#e0a800"/></svg>',zero:'<svg viewBox="0 0 32 32" width="100%" height="100%" shape-rendering="crispEdges"><rect x="6.5" y="3.5" width="19" height="25" fill="#f4f4f4" stroke="#000"/><rect x="10" y="6" width="12" height="20" fill="#222"/><rect x="13" y="9" width="6" height="14" fill="#f4f4f4"/><polygon points="19,10 19,13 13,22 13,19" fill="#222"/><rect x="8" y="27" width="16" height="1" fill="#999"/></svg>',combo:'<svg viewBox="0 0 32 32" width="100%" height="100%" shape-rendering="crispEdges"><polygon points="16,1 22,9 26,17 23,26 16,31 9,26 6,17 10,9 13,14" fill="#ff5a00" stroke="#000"/><polygon points="16,11 20,18 19,25 16,28 13,25 12,19 14,21" fill="#ffd200"/><polygon points="16,19 18,24 16,27 14,24" fill="#fff6c0"/></svg>',bugs50:'<svg viewBox="0 0 32 32" width="100%" height="100%" shape-rendering="crispEdges"><line x1="10" y1="5" x2="13" y2="8" stroke="#000" stroke-width="1.5"/><line x1="22" y1="5" x2="19" y2="8" stroke="#000" stroke-width="1.5"/><circle cx="16" cy="10" r="4" fill="#111"/><line x1="5" y1="14" x2="9" y2="16" stroke="#000" stroke-width="1.5"/><line x1="27" y1="14" x2="23" y2="16" stroke="#000" stroke-width="1.5"/><line x1="4" y1="21" x2="8" y2="21" stroke="#000" stroke-width="1.5"/><line x1="28" y1="21" x2="24" y2="21" stroke="#000" stroke-width="1.5"/><line x1="6" y1="28" x2="9" y2="25" stroke="#000" stroke-width="1.5"/><line x1="26" y1="28" x2="23" y2="25" stroke="#000" stroke-width="1.5"/><circle cx="16" cy="20" r="9" fill="#e02020" stroke="#000"/><rect x="15.5" y="11" width="1" height="18" fill="#000"/><circle cx="12" cy="17" r="1.8" fill="#000"/><circle cx="20" cy="17" r="1.8" fill="#000"/><circle cx="11.5" cy="23" r="1.8" fill="#000"/><circle cx="20.5" cy="23" r="1.8" fill="#000"/><circle cx="12" cy="14" r="1" fill="#fff"/></svg>',rock:'<svg viewBox="0 0 32 32" width="100%" height="100%" shape-rendering="crispEdges"><polygon points="4,27 6,16 12,8 21,7 28,14 29,27" fill="#8a8a8a" stroke="#000"/><polygon points="12,8 21,7 19,16 11,17" fill="#b4b4b4"/><polygon points="19,16 28,14 29,27 21,27" fill="#666"/><polygon points="6,16 11,17 10,27 4,27" fill="#9c9c9c"/><rect x="3" y="27" width="27" height="2" fill="#5a4a30"/></svg>',rival1:'<svg viewBox="0 0 32 32" width="100%" height="100%" shape-rendering="crispEdges"><polygon points="23,2 30,2 30,9 12,26 6,20" fill="#dfe3ee" stroke="#000"/><polygon points="25,4 28,4 13,20 11,18" fill="#fff"/><polygon points="5,16 9,12 20,23 16,27" fill="#d4a830" stroke="#000"/><polygon points="6,23 9,26 5,30 2,27" fill="#7a4a20" stroke="#000"/></svg>',rival5:'<svg viewBox="0 0 32 32" width="100%" height="100%" shape-rendering="crispEdges"><polygon points="3,24 3,9 10,16 16,5 22,16 29,9 29,24" fill="#ffcc00" stroke="#000"/><polygon points="16,9 19,15 13,15" fill="#fff4a0"/><rect x="3.5" y="23.5" width="25" height="5" fill="#e0a800" stroke="#000"/><circle cx="9" cy="26" r="1.6" fill="#d22"/><circle cx="16" cy="26" r="1.6" fill="#26d"/><circle cx="23" cy="26" r="1.6" fill="#2b2"/><circle cx="3" cy="9" r="1.6" fill="#ffcc00" stroke="#000"/><circle cx="16" cy="5" r="1.6" fill="#ffcc00" stroke="#000"/><circle cx="29" cy="9" r="1.6" fill="#ffcc00" stroke="#000"/></svg>',chal3:'<svg viewBox="0 0 32 32" width="100%" height="100%" shape-rendering="crispEdges"><circle cx="14" cy="18" r="12" fill="#e02020" stroke="#000"/><circle cx="14" cy="18" r="9" fill="#fff"/><circle cx="14" cy="18" r="6" fill="#e02020"/><circle cx="14" cy="18" r="3" fill="#fff"/><line x1="14" y1="18" x2="29" y2="3" stroke="#5a3a1a" stroke-width="2"/><polygon points="25,3 31,1 29,7" fill="#3a8ee6" stroke="#000"/></svg>',chalall:'<svg viewBox="0 0 32 32" width="100%" height="100%" shape-rendering="crispEdges"><rect x="11.5" y="5.5" width="9" height="5" fill="none" stroke="#000" stroke-width="2"/><rect x="3.5" y="10.5" width="25" height="5" fill="#a93226" stroke="#000"/><rect x="3.5" y="15.5" width="25" height="13" fill="#c0392b" stroke="#000"/><rect x="14" y="13" width="4" height="5" fill="#ccc" stroke="#000"/><rect x="6" y="21" width="20" height="1" fill="#8e2a20"/></svg>',fams:'<svg viewBox="0 0 32 32" width="100%" height="100%" shape-rendering="crispEdges"><rect x="1.5" y="2.5" width="18" height="13" fill="#c0c0c0" stroke="#000"/><rect x="2" y="3" width="17" height="3" fill="#000080"/><rect x="7.5" y="9.5" width="18" height="13" fill="#eee" stroke="#000"/><rect x="8" y="10" width="17" height="3" fill="#bbb"/><rect x="8" y="11" width="17" height="1" fill="#fff"/><rect x="13.5" y="16.5" width="17" height="13" fill="#c9c2b0" stroke="#000"/><rect x="14" y="17" width="16" height="3" fill="#7b68a6"/></svg>',tb:'<svg viewBox="0 0 32 32" width="100%" height="100%" shape-rendering="crispEdges"><rect x="2.5" y="7.5" width="27" height="18" fill="#b8b8b8" stroke="#000"/><circle cx="13" cy="16.5" r="7" fill="#e6e6e6" stroke="#000"/><circle cx="13" cy="16.5" r="4" fill="none" stroke="#c8c8c8"/><circle cx="13" cy="16.5" r="1.5" fill="#666"/><line x1="26" y1="10" x2="15" y2="15" stroke="#333" stroke-width="2"/><rect x="24" y="21" width="3" height="2" fill="#3c3"/></svg>',y2k:'<svg viewBox="0 0 32 32" width="100%" height="100%" shape-rendering="crispEdges"><rect x="4.5" y="6.5" width="23" height="22" fill="#fff" stroke="#000"/><rect x="4.5" y="6.5" width="23" height="6" fill="#d22" stroke="#000"/><rect x="9" y="3" width="2" height="6" fill="#333"/><rect x="21" y="3" width="2" height="6" fill="#333"/><rect x="8" y="15" width="7" height="11" fill="#000"/><rect x="10" y="17" width="3" height="7" fill="#fff"/><rect x="17" y="15" width="7" height="11" fill="#000"/><rect x="19" y="17" width="3" height="7" fill="#fff"/></svg>',bubble:'<svg viewBox="0 0 32 32" width="100%" height="100%" shape-rendering="crispEdges"><rect x="3" y="28" width="26" height="1" fill="#000"/><rect x="4.5" y="21.5" width="4" height="6" fill="#2b2" stroke="#000"/><rect x="10.5" y="16.5" width="4" height="11" fill="#2b2" stroke="#000"/><rect x="16.5" y="10.5" width="4" height="17" fill="#2b2" stroke="#000"/><circle cx="24" cy="9" r="6" fill="#ffb0e0" stroke="#000"/><circle cx="22" cy="7" r="1.5" fill="#fff"/></svg>',future:'<svg viewBox="0 0 32 32" width="100%" height="100%" shape-rendering="crispEdges"><polygon points="16,1 21,9 21,22 11,22 11,9" fill="#eee" stroke="#000"/><circle cx="16" cy="12" r="2.6" fill="#3a8ee6" stroke="#000"/><polygon points="11,15 5,24 11,22" fill="#d22" stroke="#000"/><polygon points="21,15 27,24 21,22" fill="#d22" stroke="#000"/><polygon points="12,23 20,23 16,31" fill="#ff8c00"/><polygon points="14,23 18,23 16,28" fill="#ffd200"/></svg>',end:'<svg viewBox="0 0 32 32" width="100%" height="100%" shape-rendering="crispEdges"><rect x="5" y="3" width="2" height="27" fill="#7a4a20"/><rect x="7" y="4" width="4" height="4" fill="#fff"/><rect x="11" y="4" width="4" height="4" fill="#000"/><rect x="15" y="4" width="4" height="4" fill="#fff"/><rect x="19" y="4" width="4" height="4" fill="#000"/><rect x="23" y="4" width="4" height="4" fill="#fff"/><rect x="7" y="8" width="4" height="4" fill="#000"/><rect x="11" y="8" width="4" height="4" fill="#fff"/><rect x="15" y="8" width="4" height="4" fill="#000"/><rect x="19" y="8" width="4" height="4" fill="#fff"/><rect x="23" y="8" width="4" height="4" fill="#000"/><rect x="7" y="12" width="4" height="4" fill="#fff"/><rect x="11" y="12" width="4" height="4" fill="#000"/><rect x="15" y="12" width="4" height="4" fill="#fff"/><rect x="19" y="12" width="4" height="4" fill="#000"/><rect x="23" y="12" width="4" height="4" fill="#fff"/><rect x="6.5" y="3.5" width="21" height="13" fill="none" stroke="#000"/></svg>',y2007:'<svg viewBox="0 0 32 32" width="100%" height="100%" shape-rendering="crispEdges"><rect x="9.5" y="2.5" width="14" height="27" rx="2" fill="#222" stroke="#000"/><rect x="11" y="6" width="11" height="18" fill="#3a8ae0"/><rect x="12" y="8" width="3" height="3" fill="#ffcc00"/><rect x="17" y="8" width="3" height="3" fill="#e33"/><rect x="12" y="13" width="3" height="3" fill="#3c3"/><rect x="17" y="13" width="3" height="3" fill="#fff"/><circle cx="16.5" cy="26.5" r="1.5" fill="#555"/><rect x="11" y="6" width="11" height="6" fill="rgba(255,255,255,.2)"/></svg>',crisi:'<svg viewBox="0 0 32 32" width="100%" height="100%" shape-rendering="crispEdges"><rect x="11.5" y="9.5" width="10" height="20" rx="2" fill="#d22" stroke="#000"/><rect x="13" y="14" width="7" height="6" fill="#fff"/><rect x="15" y="15" width="3" height="4" fill="#d22"/><rect x="14" y="5" width="5" height="5" fill="#333"/><rect x="19" y="5" width="8" height="2" fill="#333"/><rect x="25" y="7" width="2" height="6" fill="#333"/><rect x="12" y="10" width="2" height="18" fill="rgba(255,255,255,.3)"/></svg>',hacker:'<svg viewBox="0 0 32 32" width="100%" height="100%" shape-rendering="crispEdges"><rect x="3.5" y="5.5" width="25" height="19" fill="#111" stroke="#888"/><rect x="7" y="10" width="2" height="2" fill="#3f3"/><rect x="9" y="12" width="2" height="2" fill="#3f3"/><rect x="7" y="14" width="2" height="2" fill="#3f3"/><rect x="13" y="15" width="7" height="2" fill="#3f3"/><rect x="12.5" y="24.5" width="7" height="3" fill="#888" stroke="#000"/><circle cx="24" cy="24" r="5" fill="#ffcc00" stroke="#000"/><rect x="23" y="21" width="2" height="4" fill="#000"/></svg>',lock:'<svg viewBox="0 0 32 32" width="100%" height="100%" shape-rendering="crispEdges"><path d="M10 14 V10 a6 6 0 0 1 12 0 V14" fill="none" stroke="#888" stroke-width="3"/><rect x="6.5" y="13.5" width="19" height="15" fill="#b9a24a" stroke="#000"/><rect x="15" y="18" width="2" height="6" fill="#4a3a10"/></svg>'};
 const TROPHIES=[
  {id:'first',n:'Ciao mondo',d:'Pubblica la prima versione.'},
  {id:'five',n:'Cinque stelle',d:'Ottieni 5 stelle a un lancio.'},
@@ -1832,6 +1955,7 @@ const TROPHIES=[
  {id:'future',n:'Benvenuto nel futuro',d:'Arriva nel 2001.'},
  {id:'end',n:'Fine della storia',d:'Concludi la storia del tuo sistema operativo.'},
  {id:'y2007',n:'Oltre il futuro',d:'Arriva nell\'epoca bonus 2007.'},
+ {id:'crisi',n:'Gestore di crisi',d:'Risolvi 5 crisi improvvise.'},
  {id:'hacker',n:'Smanettone',d:'Trova 3 comandi segreti nella shell.',hid:1}];
 function toast(a,b,ic){const el=document.createElement('div');el.className='toast';el.innerHTML=`${ic?`<span class="tic">${ic}</span>`:''}<b>${esc(a)}</b><br><span>${esc(b)}</span>`;$('#crt').appendChild(el);setTimeout(()=>el.remove(),3700)}
 function trophy(id){if(!S||S.trophies.includes(id))return;S.trophies.push(id);const t=TROPHIES.find(x=>x.id===id);const lg=legacyGet();lg.trophies=[...new Set([...(lg.trophies||[]),id])];legacySet(lg);
