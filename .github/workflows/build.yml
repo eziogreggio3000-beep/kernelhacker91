@@ -6,12 +6,23 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - name: Estrai il progetto (se caricato come zip)
+      - uses: actions/checkout@v5
+      - name: Prepara il progetto
         run: |
-          if [ -f kh91-android.zip ]; then unzip -o kh91-android.zip; fi
+          shopt -s nullglob
+          # 1) qualsiasi zip caricato nella radice viene estratto
+          for z in *.zip; do echo "Estraggo $z"; unzip -o "$z" -d _zip; done
+          # 2) trova settings.gradle ovunque (zip estratto, cartella caricata, radice)
+          if [ ! -f settings.gradle ]; then
+            S=$(find . -name settings.gradle -not -path "./.git/*" | head -n1)
+            if [ -z "$S" ]; then echo "::error::Non trovo settings.gradle: carica kh91-android.zip nella radice del repository"; ls -laR | head -100; exit 1; fi
+            D=$(dirname "$S"); echo "Progetto trovato in $D"
+            cp -r "$D"/. .
+          fi
+          # 3) se c'è un index.html nella radice, usa quello come versione del gioco
           if [ -f index.html ]; then mkdir -p app/src/main/assets && cp index.html app/src/main/assets/index.html; fi
-      - uses: actions/setup-java@v4
+          ls -la; ls -la app/src/main/assets
+      - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '17'
@@ -20,7 +31,7 @@ jobs:
         with:
           gradle-version: '8.9'
       - name: Compila
-        run: gradle --no-daemon assembleDebug
+        run: gradle --no-daemon --stacktrace assembleDebug
       - name: Rinomina
         run: cp app/build/outputs/apk/debug/app-debug.apk KernelHacker91.apk
       - uses: actions/upload-artifact@v4
