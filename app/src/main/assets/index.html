@@ -735,9 +735,9 @@ const MODS=[
  {id:'mem',n:'Gestore memoria',f:'mm.c',c:1500,r:48,q:['kern'],d:'Paginazione e malloc(). Tocco x2.'},
  {id:'vga',n:'Driver video VGA',f:'vga.c',c:5000,r:64,q:['kern'],d:'256 colori! Sblocca i temi. Produzione x1.25.'},
  {id:'sched',n:'Scheduler',f:'sched.c',c:15000,r:32,q:['mem'],d:'Round-robin. Collaboratori x1.5.'},
- {id:'fs',n:'Filesystem',f:'vfs.c',c:40000,r:96,q:['mem'],d:'Inode e directory. +20 B/s.'},
+ {id:'fs',n:'Filesystem',f:'vfs.c',c:22000,r:96,q:['mem'],d:'Inode e directory. +20 B/s.'},
  {id:'hdd',n:'Driver disco IDE',f:'ide.c',c:100000,r:48,q:['fs'],d:'Il team lavora anche quando sei offline. Produzione x1.2.'},
- {id:'shell',n:'Shell',f:'sh.c',c:250000,r:64,q:['fs','kbd'],d:'Prompt interattivo nella scheda CODICE. Tocco x2.'},
+ {id:'shell',n:'Shell',f:'sh.c',c:110000,r:64,q:['fs','kbd'],d:'Prompt interattivo nella scheda CODICE. Tocco x2.'},
  {id:'snd',n:'Driver audio',f:'sb16.c',c:600000,r:128,q:['kern'],d:'Dal bip alla musica. Produzione x1.25.'},
  {id:'dbg',n:'Debugger',f:'gdbstub.c',c:1500000,r:128,q:['shell'],d:'Bug dimezzati e correzione automatica.'},
  {id:'mt',n:'Multitasking preemptive',f:'task.c',c:4000000,r:256,q:['sched'],d:'Collaboratori x1.5.'},
@@ -999,6 +999,7 @@ function type(x,y){
 }
 
 /* ---------- bug & panic ---------- */
+let bugCool=0;
 function addBug(){
   const inst=MODS.filter(m=>has(m.id)&&m.id!=='rel');if(!inst.length)return;
   const m=pick(inst);S.bugs.push({id:Date.now()+Math.random(),t:`${pick(BUGT)} ${m.f}:${10+Math.floor(Math.random()*900)}`});
@@ -1215,7 +1216,7 @@ function tick(){
     const g=bps()*dt;gain(g);S.playSec=(S.playSec||0)+dt;S.gdate=Math.min(eraCap(),(S.gdate||Date.UTC(1991,0,7))+dt*ESPAN[era()]*365/900*86400000);
     if(has('kern')){
       bugAcc+=dt;
-      if(bugAcc>=1){bugAcc=0;checkTrophies();if(S.y2kEnd){if(Date.now()<S.y2kEnd){if(Math.random()<.2)addBug()}else{if(!S.y2kPanic){trophy('y2k');const g=bb(300);gain(g);log(`🎉 Il 2000 è arrivato e ${S.name} è sopravvissuto! Premio: +${fmtB(g)}`,'warn')}else log('Il Millennium bug ti ha messo in ginocchio, ma il 2000 è arrivato lo stesso.','err');S.y2kEnd=0}}const n=MODS.filter(m=>has(m.id)&&m.id!=='rel').length;const p=.0045*n*(has('dbg')?.5:1)*(has('rel')?.5:1)*(sprintOn()?3:1)*(P('spaghetti')?2:1)*(P('qa')?.5:1)*(sysLv('upd')?.7:1)*(sysLv('cloud')?.8:1)*(fam()==='u'?.75:1)*(P('overclock')?1.5:1)*(1-.1*L('qa'));if(Math.random()<p)addBug()}
+      if(bugAcc>=1){bugAcc=0;checkTrophies();if(S.y2kEnd){if(Date.now()<S.y2kEnd){if(Math.random()<.2)addBug()}else{if(!S.y2kPanic){trophy('y2k');const g=bb(300);gain(g);log(`🎉 Il 2000 è arrivato e ${S.name} è sopravvissuto! Premio: +${fmtB(g)}`,'warn')}else log('Il Millennium bug ti ha messo in ginocchio, ma il 2000 è arrivato lo stesso.','err');S.y2kEnd=0}}const n=MODS.filter(m=>has(m.id)&&m.id!=='rel').length;const p=.0045*n*(has('dbg')?.5:1)*(has('rel')?.5:1)*(sprintOn()?3:1)*(P('spaghetti')?2:1)*(P('qa')?.5:1)*(sysLv('upd')?.7:1)*(sysLv('cloud')?.8:1)*(fam()==='u'?.75:1)*(P('overclock')?1.5:1)*(1-.1*L('qa'));bugCool-=1;if(bugCool<=0&&Math.random()<p&&(bugCool=sprintOn()?12:20))addBug()}
       if(has('dbg')&&S.bugs.length){autoFix+=dt;if(autoFix>=15){autoFix=0;fixBug(S.bugs[0].id,true)}}
     }
     if(has('kern')){const now=Date.now();if(!S.nextMsg)S.nextMsg=now+60000;
@@ -1840,7 +1841,7 @@ const TIPS=[
  {id:'news',t:'Una notizia 📰: un programma famoso sta per uscire. Toccala per vedere i requisiti della sfida.',sel:()=>curTab==='code'?'#newsb':'nav [data-t=code]',when:()=>!!S.chal},
  {id:'msg',t:'Un messaggio da Usenet! Aprilo prima che scada: ogni scelta ha le sue conseguenze.',sel:()=>curTab==='code'?'#msgb':'nav [data-t=code]',when:()=>!!S.msg},
  {id:'lab',t:'Hai incassato i primi milioni di lire: spendili nel LABORATORIO per potenziamenti permanenti.',sel:()=>'nav [data-t=hw]',when:()=>S.money>=8&&S.releases>0,done:()=>Object.keys(S.lab).length>0}];
-let tutAcc=0,tutCur=null;
+let tutAcc=0,tutCur=null,tipT=0;
 function tutActive(){
   if(S.tut!==undefined&&S.tut<TUT.length){const st=TUT[S.tut];if(st.done&&st.done()){S.tut++;save();return tutActive()}if(!st.when||st.when())return{st,kind:'tut'};return null}
   S.tips=S.tips||[];for(const tp of TIPS){if(S.tips.includes(tp.id))continue;if(tp.done&&tp.done()){S.tips.push(tp.id);continue}if(tp.when())return{st:tp,kind:'tip'}}return null}
@@ -1850,9 +1851,11 @@ function updTut(){
   if(!a){el.hidden=true;tutCur=null;return}
   const sel=a.st.sel();const tg=sel&&document.querySelector(sel);if(tg)tg.classList.add('tutglow');
   if(tg){const r=tg.getBoundingClientRect(),cr=$('#crt').getBoundingClientRect(),inNav=!!tg.closest('nav'),low=!inNav&&r.bottom>cr.top+cr.height*.55;el.classList.toggle('top',low);el.classList.toggle('up',!inNav&&!low)}else{el.classList.remove('top','up')}
-  if(tutCur!==a.st){tutCur=a.st;el.hidden=false;$('#tutt').textContent=a.st.t;$('#tutok').hidden=!(a.kind==='tip'||a.st.ok);$('#tutskip').hidden=a.kind!=='tut';
+  if(a.kind==='tip'&&tutCur===a.st&&Date.now()-tipT>12000){S.tips.push(a.st.id);tutCur=null;save();el.hidden=true;return}
+  if(tutCur!==a.st){tutCur=a.st;tipT=Date.now();el.hidden=false;$('#tutt').textContent=a.st.t;$('#tutok').hidden=!(a.kind==='tip'||a.st.ok);$('#tutskip').hidden=a.kind!=='tut';
     $('#tutstep').textContent=a.kind==='tut'?`Tutorial ${S.tut+1}/${TUT.length}`:'Consiglio';beep(1200,.03)}
 }
+$('#tut').addEventListener('click',e=>{if(e.target.closest('button'))return;const a=tutActive();if(a&&a.kind==='tip'){S.tips.push(a.st.id);tutCur=null;save();updTut()}});
 $('#tutok').addEventListener('click',()=>{const a=tutActive();if(!a)return;if(a.kind==='tut')S.tut++;else S.tips.push(a.st.id);tutCur=null;save();updTut()});
 $('#tutskip').addEventListener('click',()=>{S.tut=TUT.length;tutCur=null;save();updTut();log('Tutorial saltato: lo ritrovi nel MENU, sotto "Come si gioca".','dim')});
 
