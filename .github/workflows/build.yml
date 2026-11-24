@@ -1,6 +1,5 @@
 name: Costruisci APK
 on:
-  push:
   workflow_dispatch:
 permissions:
   contents: write

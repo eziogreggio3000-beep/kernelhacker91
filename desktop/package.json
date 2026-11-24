@@ -1,0 +1,28 @@
+{
+  "name": "kernel-hacker-91",
+  "productName": "KERNEL HACKER '91",
+  "version": "0.9.0",
+  "description": "Build an operating system from 1991 to 2035.",
+  "main": "main.js",
+  "author": "Andrea",
+  "license": "UNLICENSED",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder"
+  },
+  "devDependencies": {
+    "electron": "^33.2.0",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "com.kernelhacker91.game",
+    "productName": "KERNEL HACKER 91",
+    "directories": { "output": "dist", "buildResources": "build" },
+    "files": ["main.js", "preload.js", "game/**"],
+    "win": { "target": [{ "target": "portable", "arch": ["x64"] }, { "target": "nsis", "arch": ["x64"] }], "icon": "build/icon.png" },
+    "nsis": { "oneClick": false, "allowToChangeInstallationDirectory": true },
+    "mac": { "target": [{ "target": "dmg", "arch": ["universal"] }], "category": "public.app-category.games", "icon": "build/icon.png", "identity": null },
+    "linux": { "target": ["AppImage"], "category": "Game", "icon": "build/icon.png" },
+    "artifactName": "KernelHacker91-${os}-${arch}.${ext}"
+  }
+}

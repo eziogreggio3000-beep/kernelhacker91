@@ -1,0 +1,40 @@
+name: Costruisci versione PC
+on:
+  push:
+    paths: ['desktop/**', '.github/workflows/desktop.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        working-directory: desktop
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Installa
+        run: npm install --no-audit --no-fund
+      - name: Costruisci
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+        run: npx electron-builder --publish never
+      - name: Elenco file
+        shell: bash
+        run: ls -la dist
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: pc
+          name: "KERNEL HACKER '91 · versione PC"
+          body: "Ultima versione PC costruita automaticamente. Windows: KernelHacker91-win-x64.exe (portatile, non serve installare). Mac: il file .dmg. Linux: il file .AppImage."
+          files: |
+            desktop/dist/*.exe
+            desktop/dist/*.dmg
+            desktop/dist/*.AppImage
