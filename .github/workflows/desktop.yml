@@ -33,7 +33,7 @@ jobs:
         with:
           tag_name: pc
           name: "KERNEL HACKER '91 · versione PC"
-          body: "Ultima versione PC costruita automaticamente. Windows: KernelHacker91-win-x64.exe (portatile, non serve installare). Mac: il file .dmg. Linux: il file .AppImage."
+          body: "Ultima versione PC costruita automaticamente. Windows: KernelHacker91-setup-x64.exe (installazione) oppure KernelHacker91-win-x64-portatile.exe (non serve installare). Mac: il file .dmg. Linux: il file .AppImage."
           files: |
             desktop/dist/*.exe
             desktop/dist/*.dmg
