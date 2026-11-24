@@ -1702,7 +1702,7 @@ function panic(){
 $('#panic').addEventListener('click',()=>{$('#panic').hidden=true;paused=false;lastT=performance.now();log('Sistema riavviato dopo il kernel panic. Respira.','err')});
 
 /* ---------- acquisti ---------- */
-const NOVUP=.4,NOVNEW=1,NOVCAP=3,NOVSEC=20,novBig=c=>c>=Math.max(1,bps())*NOVSEC,novMul=()=>(P('idea')?1.4:1)*(P('visionario')?1.6:1);
+const NOVUP=.4,NOVNEW=1,NOVCAP=3,novThr=()=>{const c=MODS.filter(m=>m.id!=='rel'&&sysLv(m.id)>0&&sysLv(m.id)<MAXLV&&!(S.legacy||[]).includes(m.id)).map(m=>upCost(m)).sort((a,b)=>a-b);return c.length?c[Math.floor(c.length/2)]:0},novBig=c=>c>=novThr(),novMul=()=>(P('idea')?1.4:1)*(P('visionario')?1.6:1);
 const novLeft=id=>Math.max(0,NOVCAP-((S.novM||{})[id]||0));
 const novNext=id=>{const m=MODS.find(x=>x.id===id);return novLeft(id)&&m&&novBig(upCost(m))?NOVUP*novMul():0};
 function novUp(id){if(!novNext(id))return;S.novM=S.novM||{};S.novM[id]=(S.novM[id]||0)+1;S.novW=(S.novW||0)+NOVUP*novMul()}
@@ -1765,7 +1765,7 @@ function refBar(rt){
   let msg;
   if(prev>=5&&rt.s>=5)msg='<b>Al massimo: 5 stelle come la versione precedente.</b>';
   else if(ok)msg=`<b>✔ Già meglio della versione precedente!</b>`;
-  else if(need<=10){const n=Math.ceil(miss/(NOVUP*novMul())-1e-9);msg=`Ti servono ancora <b>${f(miss)} novità</b>: cioè <b>${n} miglioramenti importanti</b> (quelli con scritto <b class="nvg">${nvTxt(NOVUP*novMul())} novità</b>, al massimo ${NOVCAP} per modulo a ogni versione) oppure moduli nuovi (<b class="nvg">+1</b> ciascuno). I miglioramenti che costano poco non fanno notizia.`}
+  else if(need<=10){const n=Math.ceil(miss/(NOVUP*novMul())-1e-9);msg=`Ti servono ancora <b>${f(miss)} novità</b>: cioè <b>${n} miglioramenti importanti</b> (quelli con scritto <b class="nvg">${nvTxt(NOVUP*novMul())} novità</b>, al massimo ${NOVCAP} per modulo a ogni versione) oppure moduli nuovi (<b class="nvg">+1</b> ciascuno). Fanno notizia solo i miglioramenti della metà più costosa dei tuoi moduli.`}
   else msg=`Anche con il massimo delle novità arrivi a <b>${stars(maxS)}</b>.${nb?` Correggi i bug: ognuno toglie 0,4 stelle (ora ne hai ${nb}).`:''}${rt.miss.length?` Installa i moduli mancanti: ognuno toglie 0,7 stelle.`:''}${!nb&&!rt.miss.length?' Per fare di più servono abilità ed eventi che danno stelle in più.':''}`;
   return `<div class="refbar ${ok?'ok':''}"><div class="rbt">Versione precedente: ${stars(prev)} · ora previsto: ${stars(rt.s)}</div>
   <div class="rbb"><div class="rbf" style="width:${pc(rt.s)}"></div><div class="rbm ${tgt>4?'rt':''}" style="left:${pc(tgt)}"><span>da battere</span></div></div>
@@ -4186,7 +4186,7 @@ const EN={
  // moduli
  'MODULI DEL SISTEMA':'SYSTEM MODULES','voto previsto':'expected rating','obbligatori':'required','novità':'novelty',
  'Versione precedente:':'Previous version:','ora previsto:':'expected now:','da battere':'to beat','Novità:':'Novelty:','ogni punto vale':'each point is worth','stelle':'stars','bug aperti:':'open bugs:',
- 'Ti servono ancora':'You still need','cioè':'that is','miglioramenti importanti':'big upgrades','quelli con scritto':'the ones marked','al massimo':'at most','per modulo a ogni versione':'per module each version','oppure moduli nuovi':'or new modules','ciascuno':'each','I miglioramenti che costano poco non fanno notizia.':'Cheap upgrades don\'t make the news.',
+ 'Ti servono ancora':'You still need','cioè':'that is','miglioramenti importanti':'big upgrades','quelli con scritto':'the ones marked','al massimo':'at most','per modulo a ogni versione':'per module each version','oppure moduli nuovi':'or new modules','ciascuno':'each','I miglioramenti che costano poco non fanno notizia.':'Cheap upgrades don\'t make the news.','Fanno notizia solo i miglioramenti della metà più costosa dei tuoi moduli.':'Only upgrades in the pricier half of your modules make the news.',
  'Anche con il massimo delle novità arrivi a':'Even with maximum novelty you reach','Correggi i bug: ognuno toglie':'Fix the bugs: each one costs','ora ne hai':'you have','Installa i moduli mancanti: ognuno toglie':'Install the missing modules: each one costs','Per fare di più servono abilità ed eventi che danno stelle in più.':'To do better you need abilities and events that give extra stars.',
  '✔ Già meglio della versione precedente!':'✔ Already better than the previous version!','Al massimo: 5 stelle come la versione precedente.':'Maxed out: 5 stars like the previous version.',
  'Migliora a lv.':'Upgrade to lv.','produzione':'production','troppo piccolo per fare notizia':'too small to make the news','novità al massimo per questa versione':'novelty maxed out for this version',
