@@ -10,7 +10,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-latest, macos-latest, ubuntu-latest]
+        os: [windows-latest, ubuntu-latest]  # Mac: da aggiungere più avanti (macos-latest)
     runs-on: ${{ matrix.os }}
     defaults:
       run:
@@ -33,7 +33,7 @@ jobs:
         with:
           tag_name: pc
           name: "KERNEL HACKER '91 · versione PC"
-          body: "Ultima versione PC costruita automaticamente. Windows: KernelHacker91-setup-x64.exe (installazione) oppure KernelHacker91-win-x64-portatile.exe (non serve installare). Mac: il file .dmg. Linux: il file .AppImage."
+          body: "Ultima versione PC costruita automaticamente. Windows: KernelHacker91-setup-x64.exe (installazione) oppure KernelHacker91-win-x64-portatile.exe (non serve installare). Linux: il file .AppImage."
           files: |
             desktop/dist/*.exe
             desktop/dist/*.dmg
